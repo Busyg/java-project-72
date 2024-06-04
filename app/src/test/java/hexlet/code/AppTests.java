@@ -36,7 +36,7 @@ public class AppTests {
     }
 
     @BeforeEach
-    public void setUp() {
+    public final void setUp() {
         app = App.getApp();
     }
 

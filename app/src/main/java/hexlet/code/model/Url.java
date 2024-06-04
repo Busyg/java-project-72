@@ -19,7 +19,7 @@ public class Url {
         this.name = name;
     }
 
-    public UrlCheck getLastUrlCheck() {
+    public final UrlCheck getLastUrlCheck() {
         UrlCheck lastCheck;
         try {
             lastCheck = UrlChecksRepository.getLastUrlCheck(id);
