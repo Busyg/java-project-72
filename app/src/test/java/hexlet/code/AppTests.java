@@ -46,7 +46,7 @@ public class AppTests {
             var response = client.get(NamedRoutes.rootPath());
             assertThat(response.code()).isEqualTo(200);
             assertThat(response.body()).isNotNull();
-            assertThat(response.body().string()).contains("Анализатор страниц");
+            assertThat(response.body().string()).contains("РђРЅР°Р»РёР·Р°С‚РѕСЂ СЃС‚СЂР°РЅРёС†");
         });
     }
 
@@ -56,7 +56,7 @@ public class AppTests {
             var response = client.get(NamedRoutes.urlsPath());
             assertThat(response.code()).isEqualTo(200);
             assertThat(response.body()).isNotNull();
-            assertThat(response.body().string()).contains("Сайты");
+            assertThat(response.body().string()).contains("РЎР°Р№С‚С‹");
         });
     }
 
