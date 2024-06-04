@@ -25,23 +25,23 @@ import static io.javalin.rendering.template.TemplateUtil.model;
 public class UrlController {
     public static void create(Context ctx) throws SQLException {
         var url = ctx.formParamAsClass("url", String.class)
-                .check(value -> !value.isEmpty(), "Некорректный URL")
+                .check(value -> !value.isEmpty(), "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ URL")
                 .get();
         try {
             var formattedUrl = formatUrl(url);
             if (UrlRepository.findByName(formattedUrl).isPresent()) {
-                ctx.sessionAttribute("flash", "Страница уже существует");
+                ctx.sessionAttribute("flash", "РЎС‚СЂР°РЅРёС†Р° СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
                 ctx.sessionAttribute("flash-type", "info");
                 ctx.redirect(NamedRoutes.urlsPath());
                 return;
             }
             UrlRepository.save(new Url(formattedUrl));
-            ctx.sessionAttribute("flash", "Страница успешно добавлена");
+            ctx.sessionAttribute("flash", "РЎС‚СЂР°РЅРёС†Р° СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅР°");
             ctx.sessionAttribute("flash-type", "success");
             ctx.redirect(NamedRoutes.urlsPath());
         } catch (IllegalArgumentException | URISyntaxException e) {
             var page = new BasePage();
-            page.setFlash("Некорректный URL");
+            page.setFlash("РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ URL");
             page.setFlashType("danger");
             ctx.render("root.jte", model("page", page));
         }
@@ -79,7 +79,7 @@ public class UrlController {
                     : body.selectFirst("meta[name=description]").attr("content");
             var urlCheck = new UrlCheck(statusCode, title, h1, description, id);
             UrlChecksRepository.save(urlCheck);
-            ctx.sessionAttribute("flash", "Страница успешно проверена");
+            ctx.sessionAttribute("flash", "РЎС‚СЂР°РЅРёС†Р° СѓСЃРїРµС€РЅРѕ РїСЂРѕРІРµСЂРµРЅР°");
             ctx.sessionAttribute("flashType", "success");
             ctx.status(200);
             ctx.redirect(NamedRoutes.urlPath(id));
