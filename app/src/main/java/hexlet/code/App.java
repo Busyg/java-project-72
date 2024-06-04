@@ -5,6 +5,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
+import hexlet.code.controller.RootController;
+import hexlet.code.controller.UrlController;
+import hexlet.code.repository.BaseRepository;
+import hexlet.code.util.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
 
@@ -27,8 +31,7 @@ public class App {
     private static TemplateEngine createTemplateEngine() {
         ClassLoader classLoader = App.class.getClassLoader();
         ResourceCodeResolver codeResolver = new ResourceCodeResolver("templates", classLoader);
-        TemplateEngine templateEngine = TemplateEngine.create(codeResolver, ContentType.Html);
-        return templateEngine;
+        return TemplateEngine.create(codeResolver, ContentType.Html);
     }
 
     public static void main(String[] args) {
@@ -42,13 +45,14 @@ public class App {
 
         String sql = null;
         try {
-            sql = Files.readString(Paths.get("init.sql"));
+            sql = Files.readString(Paths.get("./src/main/resources/init.sql"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
+        var dataSource = new HikariDataSource(hikariConfig);
+
         try (
-                var dataSource = new HikariDataSource(hikariConfig);
                 var connection = dataSource.getConnection();
                 var statement = connection.createStatement();
         ) {
@@ -57,14 +61,18 @@ public class App {
             throw new RuntimeException(e);
         }
 
+        BaseRepository.dataSource = dataSource;
+
         var app = Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
             config.fileRenderer(new JavalinJte(createTemplateEngine()));
         });
 
-        app.get("/", ctx -> {
-            ctx.render("index.html");
-        });
+        app.get(NamedRoutes.rootPath(), RootController::index);
+        app.post(NamedRoutes.urlsPath(), UrlController::create);
+        app.get(NamedRoutes.urlsPath(), UrlController::index);
+        app.get(NamedRoutes.urlPath("{id}"), UrlController::show);
+        app.post(NamedRoutes.urlChecksPath("{id}"), UrlController::checkUrl);
 
         return app;
     }
