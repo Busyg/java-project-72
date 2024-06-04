@@ -12,10 +12,14 @@ import hexlet.code.util.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.stream.Collectors;
 
 public class App {
 
@@ -44,8 +48,11 @@ public class App {
         hikariConfig.setJdbcUrl(getDatabaseUrl());
 
         String sql = null;
-        try {
-            sql = Files.readString(Paths.get("./src/main/resources/init.sql"));
+
+        try (var inputStream = App.class.getClassLoader().getResourceAsStream("init.sql")) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                sql = reader.lines().collect(Collectors.joining("\n"));
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
