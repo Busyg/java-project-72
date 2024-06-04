@@ -16,8 +16,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.stream.Collectors;
 
@@ -50,7 +48,9 @@ public class App {
         String sql = null;
 
         try (var inputStream = App.class.getClassLoader().getResourceAsStream("init.sql")) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+            )) {
                 sql = reader.lines().collect(Collectors.joining("\n"));
             }
         } catch (IOException e) {
