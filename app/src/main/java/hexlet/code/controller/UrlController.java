@@ -12,10 +12,8 @@ import hexlet.code.util.NamedRoutes;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
 import kong.unirest.Unirest;
-import kong.unirest.UnirestException;
 import org.jsoup.Jsoup;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
@@ -39,7 +37,7 @@ public class UrlController {
             ctx.sessionAttribute("flash", "Страница успешно добавлена");
             ctx.sessionAttribute("flash-type", "success");
             ctx.redirect(NamedRoutes.urlsPath());
-        } catch (IllegalArgumentException | URISyntaxException e) {
+        } catch (URISyntaxException | RuntimeException e) {
             var page = new BasePage();
             page.setFlash("Некорректный URL");
             page.setFlashType("danger");
@@ -83,8 +81,8 @@ public class UrlController {
             ctx.sessionAttribute("flashType", "success");
             ctx.status(200);
             ctx.redirect(NamedRoutes.urlPath(id));
-        } catch (UnirestException e) {
-            ctx.sessionAttribute("flash", e.getMessage());
+        } catch (Exception e) {
+            ctx.sessionAttribute("flash", e.getCause().getMessage());
             ctx.sessionAttribute("flashType", "danger");
             ctx.status(400);
             ctx.redirect(NamedRoutes.urlPath(id));
@@ -92,21 +90,23 @@ public class UrlController {
     }
 
     public static String formatUrl(String url) throws URISyntaxException {
-        var uri = new URI(url).normalize();
         try {
-            uri.toURL();
-        } catch (MalformedURLException e) {
+            var uri = new URI(url).normalize();
+            StringBuilder builder = new StringBuilder();
+            if (uri.getScheme() != null && uri.getHost() != null) {
+                builder.append(uri.getScheme())
+                        .append("://")
+                        .append(uri.getHost());
+                if (uri.getPort() != -1) {
+                    builder.append(":")
+                            .append(uri.getPort());
+                }
+            } else {
+                throw new RuntimeException("Некорректный URL");
+            }
+            return builder.toString();
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append(uri.getScheme())
-               .append("://")
-               .append(uri.getHost());
-
-        if (uri.getPort() != -1) {
-            builder.append(":")
-                   .append(uri.getPort());
-        }
-        return builder.toString();
     }
 }
