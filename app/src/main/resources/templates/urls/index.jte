@@ -1,5 +1,8 @@
 @import hexlet.code.dto.urls.UrlsPage
 @import hexlet.code.util.NamedRoutes
+@import hexlet.code.model.Url
+@import hexlet.code.model.UrlCheck
+@import java.util.Map
 @param  UrlsPage page
 
 @template.layout.page(
@@ -24,17 +27,28 @@ content = @`
                     </tr>
                 </thread>
                 <tbody>
-                @for(var url: page.getUrls())
+                @for(Map.Entry<Url, UrlCheck> urlMap : page.getUrls().entrySet())
+                    !{
+                        Url url = urlMap.getKey();
+                        UrlCheck lastCheck = urlMap.getValue();
+                        }
                     <tr>
-                        <td>${url.getId()}</td>
-                        <td><a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a></td>
-                        @if(url.getLastUrlCheck() != null)
-                            <td>${url.getLastUrlCheck().getCreatedAt().toString()}</td>
-                            <td>${url.getLastUrlCheck().getStatusCode()}</td>
-                        @else
-                            <td></td>
-                            <td></td>
-                        @endif
+                        <td>
+                            ${url.getId()}
+                        </td>
+                        <td>
+                            <a href="${NamedRoutes.urlPath(url.getId())}">${url.getName()}</a>
+                        </td>
+                        <td>
+                            @if(lastCheck != null)
+                                ${lastCheck.getCreatedAt().toString()}
+                            @endif
+                        </td>
+                        <td>
+                            @if(lastCheck != null)
+                                ${lastCheck.getStatusCode()}
+                            @endif
+                        </td>
                     </tr>
                 @endfor
                 </tbody>

@@ -7,9 +7,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class UrlChecksRepository extends BaseRepository {
     public static void save(UrlCheck urlCheck) throws SQLException {
@@ -63,7 +61,29 @@ public class UrlChecksRepository extends BaseRepository {
     }
 
     public static UrlCheck getLastUrlCheck(Long id) throws SQLException {
-        return getUrlChecks(id).stream().max(Comparator.comparing(UrlCheck::getId))
-                .orElseThrow(NoSuchElementException::new);
+        String statement = "SELECT * FROM url_checks WHERE url_id = ? "
+                + "ORDER BY created_at DESC FETCH FIRST 1 ROWS ONLY;";
+        try (
+                var conn = dataSource.getConnection();
+                var preparedStatement = conn.prepareStatement(statement)
+        ) {
+            preparedStatement.setLong(1, id);
+            var resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                var urlCheckId = resultSet.getLong("id");
+                var statusCode = resultSet.getInt("status_code");
+                var title = resultSet.getString("title");
+                var h1 = resultSet.getString("h1");
+                var description = resultSet.getString("description");
+                var urlId = resultSet.getLong("url_id");
+                var createdAt = resultSet.getTimestamp("created_at");
+                var urlCheck = new UrlCheck(statusCode, title, h1, description, urlId);
+                urlCheck.setId(urlCheckId);
+                urlCheck.setCreatedAt(createdAt);
+                return urlCheck;
+            } else {
+                return null;
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 package hexlet.code.model;
 
-import hexlet.code.repository.UrlChecksRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,15 +16,5 @@ public class Url {
 
     public Url(String name) {
         this.name = name;
-    }
-
-    public final UrlCheck getLastUrlCheck() {
-        UrlCheck lastCheck;
-        try {
-            lastCheck = UrlChecksRepository.getLastUrlCheck(id);
-        } catch (Exception e) {
-            lastCheck = null;
-        }
-        return lastCheck;
     }
 }

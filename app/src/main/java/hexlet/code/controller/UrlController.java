@@ -11,12 +11,13 @@ import hexlet.code.repository.UrlRepository;
 import hexlet.code.util.NamedRoutes;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
-import kong.unirest.Unirest;
-import org.jsoup.Jsoup;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static io.javalin.rendering.template.TemplateUtil.model;
 
@@ -37,7 +38,7 @@ public class UrlController {
             ctx.sessionAttribute("flash", "Страница успешно добавлена");
             ctx.sessionAttribute("flash-type", "success");
             ctx.redirect(NamedRoutes.urlsPath());
-        } catch (URISyntaxException | RuntimeException e) {
+        } catch (RuntimeException e) {
             var page = new BasePage();
             page.setFlash("Некорректный URL");
             page.setFlashType("danger");
@@ -46,8 +47,12 @@ public class UrlController {
     }
 
     public static void index(Context ctx) throws SQLException {
+        Map<Url, UrlCheck> urlsMap = new HashMap<>();
         var urls = UrlRepository.getEntities();
-        var page = new UrlsPage(urls);
+        for (var url : urls) {
+            urlsMap.put(url, UrlChecksRepository.getLastUrlCheck(url.getId()));
+        }
+        var page = new UrlsPage(urlsMap);
         page.setFlash(ctx.consumeSessionAttribute("flash"));
         page.setFlashType(ctx.consumeSessionAttribute("flashType"));
         ctx.render("urls/index.jte", model("page", page));
@@ -63,49 +68,16 @@ public class UrlController {
         ctx.render("urls/show.jte", model("page", page));
     }
 
-    public static void checkUrl(Context ctx) throws SQLException {
-        var id = ctx.pathParamAsClass("id", Long.class).get();
-        var url = UrlRepository.find(id)
-                .orElseThrow(() -> new NotFoundResponse("Url not found"));
+    public static String formatUrl(String url) {
         try {
-            var response = Unirest.get(url.getName()).asString();
-            var statusCode = response.getStatus();
-            var body = Jsoup.parse(response.getBody());
-            var title = body.title();
-            var h1 = body.selectFirst("h1") == null ? null : body.selectFirst("h1").text();
-            var description = body.selectFirst("meta[name=description]") == null ? null
-                    : body.selectFirst("meta[name=description]").attr("content");
-            var urlCheck = new UrlCheck(statusCode, title, h1, description, id);
-            UrlChecksRepository.save(urlCheck);
-            ctx.sessionAttribute("flash", "Страница успешно проверена");
-            ctx.sessionAttribute("flashType", "success");
-            ctx.status(200);
-            ctx.redirect(NamedRoutes.urlPath(id));
-        } catch (Exception e) {
-            ctx.sessionAttribute("flash", e.getCause().getMessage());
-            ctx.sessionAttribute("flashType", "danger");
-            ctx.status(400);
-            ctx.redirect(NamedRoutes.urlPath(id));
-        }
-    }
-
-    public static String formatUrl(String url) throws URISyntaxException {
-        try {
-            var uri = new URI(url).normalize();
-            StringBuilder builder = new StringBuilder();
-            if (uri.getScheme() != null && uri.getHost() != null) {
-                builder.append(uri.getScheme())
-                        .append("://")
-                        .append(uri.getHost());
-                if (uri.getPort() != -1) {
-                    builder.append(":")
-                            .append(uri.getPort());
-                }
-            } else {
-                throw new RuntimeException("Некорректный URL");
-            }
-            return builder.toString();
-        } catch (URISyntaxException e) {
+            var parsedUrl = new URI(url).toURL();
+            return String.format(
+                    "%s://%s%s",
+                    parsedUrl.getProtocol(),
+                    parsedUrl.getHost(),
+                    parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort()
+            );
+        } catch (URISyntaxException | MalformedURLException e) {
             throw new RuntimeException(e);
         }
     }

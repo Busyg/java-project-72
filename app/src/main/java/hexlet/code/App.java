@@ -6,17 +6,17 @@ import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
 import hexlet.code.controller.RootController;
+import hexlet.code.controller.UrlChecksController;
 import hexlet.code.controller.UrlController;
 import hexlet.code.repository.BaseRepository;
 import hexlet.code.util.NamedRoutes;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
+import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 public class App {
@@ -41,20 +41,20 @@ public class App {
         app.start(getPort());
     }
 
+    @SneakyThrows
     public static Javalin getApp() {
         var hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(getDatabaseUrl());
 
         String sql = null;
 
-        try (var inputStream = App.class.getClassLoader().getResourceAsStream("init.sql")) {
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(inputStream, StandardCharsets.UTF_8)
-            )) {
-                sql = reader.lines().collect(Collectors.joining("\n"));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        try (
+                var inputStream = App.class.getClassLoader().getResourceAsStream("init.sql");
+                var reader = new BufferedReader(
+                        new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+                )
+        ) {
+            sql = reader.lines().collect(Collectors.joining("\n"));
         }
 
         var dataSource = new HikariDataSource(hikariConfig);
@@ -64,8 +64,6 @@ public class App {
                 var statement = connection.createStatement();
         ) {
             statement.execute(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
 
         BaseRepository.dataSource = dataSource;
@@ -79,7 +77,7 @@ public class App {
         app.post(NamedRoutes.urlsPath(), UrlController::create);
         app.get(NamedRoutes.urlsPath(), UrlController::index);
         app.get(NamedRoutes.urlPath("{id}"), UrlController::show);
-        app.post(NamedRoutes.urlChecksPath("{id}"), UrlController::checkUrl);
+        app.post(NamedRoutes.urlChecksPath("{id}"), UrlChecksController::checkUrl);
 
         return app;
     }

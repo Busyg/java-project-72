@@ -54,21 +54,21 @@ public class AppTests {
             }
             var savedUrl = client.get(NamedRoutes.urlPath("1"));
             assertThat(savedUrl.code()).isEqualTo(200);
-            assertThat(UrlRepository.find(1L)).isNotNull();
+            assertThat(UrlRepository.find(1L).get().getName()).isEqualTo("https://some-domain.org:8080");
         });
     }
 
     @Test
     public void testSaveBadUrl() {
         JavalinTest.test(app, (server, client) -> {
-            try (var response = client.post(NamedRoutes.urlsPath(), "url=https://www.фывфыв")) {
+            try (var response = client.post(NamedRoutes.urlsPath(), "url=www.фывфыв")) {
                 assertThat(response.code()).isEqualTo(200);
                 assertThat(response.body()).isNotNull();
                 assertThat(response.body().string()).contains("Некорректный URL");
             }
             var savedUrl = client.get(NamedRoutes.urlPath("1"));
             assertThat(savedUrl.code()).isEqualTo(404);
-            assertThat(UrlRepository.find(1L)).isEmpty();
+            assertThat(UrlRepository.getEntities().size()).isEqualTo(0);
         });
     }
 
