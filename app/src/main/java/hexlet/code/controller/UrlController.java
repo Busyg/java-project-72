@@ -11,10 +11,9 @@ import hexlet.code.repository.UrlRepository;
 import hexlet.code.util.NamedRoutes;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
+import lombok.SneakyThrows;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,31 +25,37 @@ public class UrlController {
         var url = ctx.formParamAsClass("url", String.class)
                 .check(value -> !value.isEmpty(), "Некорректный URL")
                 .get();
+        String formattedUrl;
+
         try {
-            var formattedUrl = formatUrl(url);
-            if (UrlRepository.findByName(formattedUrl).isPresent()) {
-                ctx.sessionAttribute("flash", "Страница уже существует");
-                ctx.sessionAttribute("flash-type", "info");
-                ctx.redirect(NamedRoutes.urlsPath());
-                return;
-            }
-            UrlRepository.save(new Url(formattedUrl));
-            ctx.sessionAttribute("flash", "Страница успешно добавлена");
-            ctx.sessionAttribute("flash-type", "success");
-            ctx.redirect(NamedRoutes.urlsPath());
+            formattedUrl = formatUrl(url);
         } catch (RuntimeException e) {
             var page = new BasePage();
             page.setFlash("Некорректный URL");
             page.setFlashType("danger");
             ctx.render("root.jte", model("page", page));
+            return;
         }
+
+        if (UrlRepository.findByName(formattedUrl).isPresent()) {
+            ctx.sessionAttribute("flash", "Страница уже существует");
+            ctx.sessionAttribute("flash-type", "info");
+            ctx.redirect(NamedRoutes.urlsPath());
+            return;
+        }
+
+        UrlRepository.save(new Url(formattedUrl));
+        ctx.sessionAttribute("flash", "Страница успешно добавлена");
+        ctx.sessionAttribute("flash-type", "success");
+        ctx.redirect(NamedRoutes.urlsPath());
     }
 
     public static void index(Context ctx) throws SQLException {
         Map<Url, UrlCheck> urlsMap = new HashMap<>();
+        Map<Long, UrlCheck> lastUrlChecks = UrlChecksRepository.getLastUrlChecks();
         var urls = UrlRepository.getEntities();
         for (var url : urls) {
-            urlsMap.put(url, UrlChecksRepository.getLastUrlCheck(url.getId()));
+            urlsMap.put(url, lastUrlChecks.get(url.getId()));
         }
         var page = new UrlsPage(urlsMap);
         page.setFlash(ctx.consumeSessionAttribute("flash"));
@@ -68,17 +73,14 @@ public class UrlController {
         ctx.render("urls/show.jte", model("page", page));
     }
 
+    @SneakyThrows
     public static String formatUrl(String url) {
-        try {
-            var parsedUrl = new URI(url).toURL();
-            return String.format(
-                    "%s://%s%s",
-                    parsedUrl.getProtocol(),
-                    parsedUrl.getHost(),
-                    parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort()
-            );
-        } catch (URISyntaxException | MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        var parsedUrl = new URI(url).toURL();
+        return String.format(
+                "%s://%s%s",
+                parsedUrl.getProtocol(),
+                parsedUrl.getHost(),
+                parsedUrl.getPort() == -1 ? "" : ":" + parsedUrl.getPort()
+        );
     }
 }

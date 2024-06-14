@@ -97,7 +97,8 @@ public class AppTests {
             try (var urlCheckResponse = client.post(NamedRoutes.urlChecksPath("1"))) {
                 assertThat(urlCheckResponse.code()).isEqualTo(200);
             }
-            var lastCheck = UrlChecksRepository.getLastUrlCheck(1L);
+            var lastUrlChecks = UrlChecksRepository.getLastUrlChecks();
+            var lastCheck = lastUrlChecks.get(1L);
             assertThat(lastCheck.getStatusCode()).isEqualTo(200);
             assertThat(lastCheck.getTitle()).isEqualTo("Title");
             assertThat(lastCheck.getDescription()).isEqualTo("Content");

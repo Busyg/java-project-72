@@ -15,6 +15,7 @@ import io.javalin.rendering.template.JavalinJte;
 import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
@@ -46,6 +47,19 @@ public class App {
         var hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(getDatabaseUrl());
 
+        var app = initApp(hikariConfig);
+
+        app.get(NamedRoutes.rootPath(), RootController::index);
+        app.post(NamedRoutes.urlsPath(), UrlController::create);
+        app.get(NamedRoutes.urlsPath(), UrlController::index);
+        app.get(NamedRoutes.urlPath("{id}"), UrlController::show);
+        app.post(NamedRoutes.urlChecksPath("{id}"), UrlChecksController::checkUrl);
+
+        return app;
+    }
+
+    @SneakyThrows
+    public static Javalin initApp(HikariConfig hikariConfig) {
         String sql = null;
 
         try (
@@ -68,17 +82,9 @@ public class App {
 
         BaseRepository.dataSource = dataSource;
 
-        var app = Javalin.create(config -> {
+        return Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
             config.fileRenderer(new JavalinJte(createTemplateEngine()));
         });
-
-        app.get(NamedRoutes.rootPath(), RootController::index);
-        app.post(NamedRoutes.urlsPath(), UrlController::create);
-        app.get(NamedRoutes.urlsPath(), UrlController::index);
-        app.get(NamedRoutes.urlPath("{id}"), UrlController::show);
-        app.post(NamedRoutes.urlChecksPath("{id}"), UrlChecksController::checkUrl);
-
-        return app;
     }
 }
