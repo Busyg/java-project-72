@@ -64,10 +64,10 @@ public class UrlChecksRepository extends BaseRepository {
             var resultSet = preparedStatement.executeQuery();
             Map<Long, UrlCheck> resultMap = new HashMap<>();
 
-           while (resultSet.next()) {
-               var urlCheck = mapUrlCheck(resultSet);
-               resultMap.put(urlCheck.getUrlId(), urlCheck);
-           }
+            while (resultSet.next()) {
+                var urlCheck = mapUrlCheck(resultSet);
+                resultMap.put(urlCheck.getUrlId(), urlCheck);
+            }
             return resultMap;
         }
     }
