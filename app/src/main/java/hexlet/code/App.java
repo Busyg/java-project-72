@@ -46,7 +46,7 @@ public class App {
         var hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(getDatabaseUrl());
 
-        var app = initApp(hikariConfig);
+        var app = initDb(hikariConfig);
 
         app.get(NamedRoutes.rootPath(), RootController::index);
         app.post(NamedRoutes.urlsPath(), UrlController::create);
@@ -58,7 +58,7 @@ public class App {
     }
 
     @SneakyThrows
-    public static Javalin initApp(HikariConfig hikariConfig) {
+    public static Javalin initDb(HikariConfig hikariConfig) {
         String sql = null;
 
         try (

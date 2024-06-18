@@ -23,7 +23,6 @@ import static io.javalin.rendering.template.TemplateUtil.model;
 public class UrlController {
     public static void create(Context ctx) throws SQLException {
         var url = ctx.formParamAsClass("url", String.class)
-                .check(value -> !value.isEmpty(), "Некорректный URL")
                 .get();
         String formattedUrl;
 
